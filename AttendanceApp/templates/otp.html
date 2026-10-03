@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>OTP Verification</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+}
+
+body{
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  font-family: 'Segoe UI', sans-serif;
+  min-height: 100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:15px;
+}
+
+#page-loader{
+  position:fixed;
+  width:100%;
+  height:100vh;
+  background:#0f172a;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  z-index:99999;
+}
+
+.loader-animation {
+  width: 65px;
+  aspect-ratio: 1;
+  position: relative;
+}
+
+.loader-animation:before,
+.loader-animation:after {
+  content: "";
+  position: absolute;
+  border-radius: 50px;
+  box-shadow: 0 0 0 3px inset #fff;
+  animation: l4 2.5s infinite;
+}
+
+.loader-animation:after {
+  animation-delay: -1.25s;
+}
+
+@keyframes l4 {
+  0% {
+    inset: 0 35px 35px 0;
+  }
+  12.5% {
+    inset: 0 35px 0 0;
+  }
+  25% {
+    inset: 35px 35px 0 0;
+  }
+  37.5% {
+    inset: 35px 0 0 0;
+  }
+  50% {
+    inset: 35px 0 0 35px;
+  }
+  62.5% {
+    inset: 0 0 0 35px;
+  }
+  75% {
+    inset: 0 0 35px 35px;
+  }
+  87.5% {
+    inset: 0 0 35px 0;
+  }
+  100% {
+    inset: 0 35px 35px 0;
+  }
+}
+
+#main-content{
+  display:none;
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.card{
+  background:white;
+  padding:40px;
+  border-radius:16px;
+  width:100%;
+  max-width:350px;
+  text-align:center;
+  box-shadow:0 20px 40px rgba(0,0,0,.2);
+}
+
+.card h2{
+  margin-bottom:10px;
+}
+
+.card p{
+  font-size:14px;
+}
+
+.otp-box{
+  display:flex;
+  justify-content:space-between;
+  margin:30px 0;
+  gap:8px;
+}
+
+.otp-input{
+  width:100%;
+  max-width:45px;
+  height:55px;
+  font-size:22px;
+  text-align:center;
+  border-radius:10px;
+  border:2px solid #ccc;
+  transition:.3s;
+}
+
+.otp-input:focus{
+  border-color:#667eea;
+  outline:none;
+}
+
+button{
+  width:100%;
+  padding:14px;
+  border:none;
+  border-radius:10px;
+  background:#667eea;
+  color:white;
+  font-size:16px;
+  cursor:pointer;
+  margin-top:10px;
+}
+
+button:disabled{
+  background:gray;
+}
+
+.back-btn{
+  background:#444;
+}
+
+.loader{
+  display:none;
+  margin-top:20px;
+}
+
+.error{
+  color:red;
+  margin-top:10px;
+  font-size:14px;
+}
+
+.success{
+  color:green;
+  margin-top:10px;
+  font-size:14px;
+}
+
+.timer{
+  margin-top:15px;
+  font-size:14px;
+  color:#555;
+}
+
+.resend{
+  margin-top:10px;
+  font-size:14px;
+  color:#667eea;
+  cursor:pointer;
+  display:none;
+}
+
+@media(max-width:480px){
+  .card{
+    padding:25px;
+  }
+
+  .otp-input{
+    height:50px;
+    font-size:20px;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div id="page-loader">
+  <div class="loader-animation"></div>
+</div>
+
+<div id="main-content">
+
+ <div class="card">
+  <h2>OTP Verification</h2>
+  <p>Enter the 6-digit OTP sent to your email</p>
+
+  <form method="POST" onsubmit="showLoader()">
+    {% csrf_token %}
+
+    <div class="otp-box">
+      <input type="text" maxlength="1" class="otp-input" inputmode="numeric">
+      <input type="text" maxlength="1" class="otp-input" inputmode="numeric">
+      <input type="text" maxlength="1" class="otp-input" inputmode="numeric">
+      <input type="text" maxlength="1" class="otp-input" inputmode="numeric">
+      <input type="text" maxlength="1" class="otp-input" inputmode="numeric">
+      <input type="text" maxlength="1" class="otp-input" inputmode="numeric">
+    </div>
+
+    <input type="hidden" name="otp" id="otp">
+
+    <button type="submit" id="verifyBtn" disabled>Verify OTP</button>
+
+    <button type="button" class="back-btn" onclick="goBack()">Back</button>
+
+    <div class="timer" id="timer">Time remaining: 120s</div>
+
+    <div class="resend" id="resendBtn" onclick="resendOtp()">
+      Resend OTP
+    </div>
+
+    <div class="loader" id="loader">Verifying OTP...</div>
+
+    {% if error %}
+      <div class="error">{{ error }}</div>
+    {% endif %}
+
+    {% if success %}
+      <div class="success">{{ success }}</div>
+    {% endif %}
+  </form>
+ </div>
+
+</div>
+
+<script>
+
+window.addEventListener("load",function(){
+
+  setTimeout(function(){
+
+    document.getElementById("page-loader").style.display="none";
+    document.getElementById("main-content").style.display="flex";
+
+  },3000);
+
+});
+
+const inputs = document.querySelectorAll(".otp-input");
+const hiddenOtp = document.getElementById("otp");
+const btn = document.getElementById("verifyBtn");
+const timerDisplay = document.getElementById("timer");
+const resendBtn = document.getElementById("resendBtn");
+
+let timeLeft = 120;
+let timerInterval;
+
+function startTimer(){
+  timeLeft = 120;
+  resendBtn.style.display = "none";
+  timerDisplay.style.display = "block";
+  btn.disabled = true;
+
+  timerInterval = setInterval(()=>{
+    timeLeft--;
+    timerDisplay.innerText = "Time remaining: " + timeLeft + "s";
+
+    if(timeLeft <= 0){
+      clearInterval(timerInterval);
+      timerDisplay.innerText = "OTP expired";
+      resendBtn.style.display = "block";
+      btn.disabled = true;
+    }
+  },1000);
+}
+
+function resendOtp(){
+  window.location.href="/resend-otp/";
+}
+
+function goBack(){
+  window.history.back();
+}
+
+startTimer();
+
+inputs.forEach((input,index)=>{
+
+  input.addEventListener("input",()=>{
+
+    if(isNaN(input.value)){
+      input.value="";
+    }
+
+    if(input.value && index < 5){
+      inputs[index+1].focus();
+    }
+
+    updateOTP();
+  });
+
+  input.addEventListener("keydown",(e)=>{
+    if(e.key==="Backspace" && !input.value && index>0){
+      inputs[index-1].focus();
+    }
+  });
+
+  input.addEventListener("paste",(e)=>{
+    const paste = e.clipboardData.getData("text");
+
+    paste.split("").forEach((char,i)=>{
+      if(inputs[i]){
+        inputs[i].value = char;
+      }
+    });
+
+    updateOTP();
+  });
+
+});
+
+function updateOTP(){
+  let otp = "";
+
+  inputs.forEach(i=>{
+    otp += i.value;
+  });
+
+  hiddenOtp.value = otp;
+
+  if(otp.length === 6 && timeLeft > 0){
+    btn.disabled = false;
+  }else{
+    btn.disabled = true;
+  }
+}
+
+function showLoader(){
+  document.getElementById("loader").style.display="block";
+  btn.innerText="Please wait...";
+}
+
+</script>
+
+</body>
+</html>
+

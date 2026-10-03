@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Attendance Failed</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <style>
+        *{
+            margin:0;
+            padding:0;
+            box-sizing:border-box;
+            font-family:"Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body{
+            min-height:100vh;
+            background:linear-gradient(135deg,#ff4e50,#f44336);
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            padding:15px;
+        }
+
+        #page-loader{
+            position:fixed;
+            width:100%;
+            height:100vh;
+            background:#0f172a;
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            z-index:99999;
+            top:0;
+            left:0;
+        }
+
+        .loader-animation {
+            width: 65px;
+            aspect-ratio: 1;
+            position: relative;
+        }
+
+        .loader-animation:before,
+        .loader-animation:after {
+            content: "";
+            position: absolute;
+            border-radius: 50px;
+            box-shadow: 0 0 0 3px inset #fff;
+            animation: l4 2.5s infinite;
+        }
+
+        .loader-animation:after {
+            animation-delay: -1.25s;
+        }
+
+        @keyframes l4 {
+            0% {
+                inset: 0 35px 35px 0;
+            }
+            12.5% {
+                inset: 0 35px 0 0;
+            }
+            25% {
+                inset: 35px 35px 0 0;
+            }
+            37.5% {
+                inset: 35px 0 0 0;
+            }
+            50% {
+                inset: 35px 0 0 35px;
+            }
+            62.5% {
+                inset: 0 0 0 35px;
+            }
+            75% {
+                inset: 0 0 35px 35px;
+            }
+            87.5% {
+                inset: 0 0 35px 0;
+            }
+            100% {
+                inset: 0 35px 35px 0;
+            }
+        }
+
+        #main-content{
+            display:none;
+            width:100%;
+            display:flex;
+            justify-content:center;
+            align-items:center;
+        }
+
+        .card{
+            background:#fff;
+            width:100%;
+            max-width:380px;
+            padding:35px 25px;
+            border-radius:18px;
+            text-align:center;
+            box-shadow:0 20px 40px rgba(0,0,0,0.2);
+            animation:slideDown 0.8s ease;
+        }
+
+        @keyframes slideDown{
+            from{
+                transform:translateY(-30px);
+                opacity:0;
+            }
+            to{
+                transform:translateY(0);
+                opacity:1;
+            }
+        }
+
+        .icon{
+            width:90px;
+            height:90px;
+            margin:0 auto 20px;
+            border-radius:50%;
+            background:#ffe6e6;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            animation:pulse 1.5s infinite;
+        }
+
+        .icon span{
+            font-size:48px;
+            color:#e53935;
+        }
+
+        @keyframes pulse{
+            0%{transform:scale(1);}
+            50%{transform:scale(1.08);}
+            100%{transform:scale(1);}
+        }
+
+        h1{
+            color:#e53935;
+            font-size:26px;
+            margin-bottom:10px;
+        }
+
+        p{
+            color:#555;
+            font-size:15px;
+            margin-bottom:25px;
+            line-height:1.6;
+        }
+
+        .reason{
+            background:#fff3f3;
+            color:#c62828;
+            padding:12px;
+            border-radius:10px;
+            font-size:14px;
+            margin-bottom:25px;
+        }
+
+        .btn-group{
+            display:flex;
+            gap:10px;
+            flex-wrap:wrap;
+        }
+
+        a{
+            flex:1;
+            text-decoration:none;
+            padding:12px 0;
+            border-radius:10px;
+            font-weight:600;
+            transition:0.3s;
+            text-align:center;
+        }
+
+        .retry{
+            background:#e53935;
+            color:#fff;
+        }
+
+        .retry:hover{
+            background:#c62828;
+        }
+
+        .home{
+            background:#f2f2f2;
+            color:#333;
+        }
+
+        .home:hover{
+            background:#ddd;
+        }
+
+        footer{
+            margin-top:20px;
+            font-size:12px;
+            color:#888;
+        }
+
+        @media(max-width:480px){
+            .card{
+                padding:25px 18px;
+            }
+            h1{
+                font-size:22px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div id="page-loader">
+    <div class="loader-animation"></div>
+</div>
+
+<div id="main-content">
+
+    <div class="card">
+        <div class="icon">
+            <span>✖</span>
+        </div>
+
+        <h1>Attendance Failed</h1>
+
+        <p>
+            Sorry! Your attendance could not be marked successfully.
+        </p>
+
+        <div class="reason">
+            Face not recognized or verification failed.<br>
+            Please try again.
+        </div>
+
+        <div class="btn-group">
+            <a href="/attendance/" class="retry" onclick="showLoader()">Try Again</a>
+            <a href="{% url 'login' %}" class="home" onclick="showLoader()">Back to login</a>
+        </div>
+
+        <footer>
+            © 2026 Online Attendance System
+        </footer>
+    </div>
+
+</div>
+
+<script>
+
+window.addEventListener("load",function(){
+
+    setTimeout(function(){
+
+        document.getElementById("page-loader").style.display="none";
+        document.getElementById("main-content").style.display="flex";
+
+    },3000);
+
+});
+
+function showLoader(){
+    document.getElementById("page-loader").style.display = "flex";
+}
+
+</script>
+
+</body>
+</html>

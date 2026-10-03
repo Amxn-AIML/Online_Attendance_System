@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Manage Students</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:"Segoe UI",sans-serif;
+}
+
+body{
+  background:#f1f5f9;
+  padding:30px;
+}
+
+#page-loader{
+  position:fixed;
+  width:100%;
+  height:100vh;
+  background:#0f172a;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  z-index:99999;
+  top:0;
+  left:0;
+}
+
+.loader-animation{
+  width:65px;
+  aspect-ratio:1;
+  position:relative;
+}
+
+.loader-animation:before,
+.loader-animation:after{
+  content:"";
+  position:absolute;
+  border-radius:50px;
+  box-shadow:0 0 0 3px inset #fff;
+  animation:l4 2.5s infinite;
+}
+
+.loader-animation:after{
+  animation-delay:-1.25s;
+}
+
+@keyframes l4{
+  0%{inset:0 35px 35px 0;}
+  12.5%{inset:0 35px 0 0;}
+  25%{inset:35px 35px 0 0;}
+  37.5%{inset:35px 0 0 0;}
+  50%{inset:35px 0 0 35px;}
+  62.5%{inset:0 0 0 35px;}
+  75%{inset:0 0 35px 35px;}
+  87.5%{inset:0 0 35px 0;}
+  100%{inset:0 35px 35px 0;}
+}
+
+#main-content{
+  display:none;
+}
+
+.header{
+  background:white;
+  padding:20px;
+  border-radius:16px;
+  box-shadow:0 10px 30px rgba(0,0,0,.08);
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:30px;
+  flex-wrap:wrap;
+  gap:10px;
+}
+
+.header h2{
+  color:#1f2937;
+  font-size:22px;
+}
+
+.back{
+  text-decoration:none;
+  color:#4f46e5;
+  font-weight:600;
+}
+
+.back:hover{
+  color:red;
+}
+
+.section{
+  background:white;
+  padding:25px;
+  border-radius:18px;
+  box-shadow:0 12px 35px rgba(0,0,0,.08);
+  margin-bottom:35px;
+}
+
+.section h3{
+  margin-bottom:15px;
+}
+
+form input,
+form button{
+  width:100%;
+  padding:12px;
+  margin:8px 0;
+  border-radius:10px;
+  border:1px solid #d1d5db;
+  font-size:16px;
+}
+
+form button{
+  background:linear-gradient(135deg,#4f46e5,#6366f1);
+  color:white;
+  border:none;
+  font-weight:600;
+}
+
+.table-wrapper{
+  overflow-x:auto;
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:15px;
+  min-width:600px;
+}
+
+table th,
+table td{
+  padding:12px;
+  border-bottom:1px solid #e5e7eb;
+  white-space:nowrap;
+}
+
+table th{
+  background:#eef2ff;
+}
+
+.delete-btn{
+  color:#dc2626;
+  text-decoration:none;
+  font-weight:600;
+}
+
+img{
+  border-radius:6px;
+}
+
+@media(max-width:768px){
+  body{
+    padding:15px;
+  }
+
+  .header{
+    flex-direction:column;
+    align-items:flex-start;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div id="page-loader">
+  <div class="loader-animation"></div>
+</div>
+
+<div id="main-content">
+
+<div class="header">
+  <h2>Student Management</h2>
+
+  <a href="/admin-dashboard/"
+     class="back"
+     onclick="showLoader()">
+     ← Back to Dashboard
+  </a>
+</div>
+
+<div class="section">
+
+  <h3>Add Student</h3>
+
+  <form method="POST"
+        enctype="multipart/form-data"
+        onsubmit="showLoader()">
+
+    {% csrf_token %}
+
+    <input type="text"
+           name="name"
+           placeholder="Student Name"
+           required>
+
+    <input type="email"
+           name="email"
+           placeholder="Student Email"
+           required>
+
+    <input type="password"
+           name="password"
+           placeholder="Temporary Password"
+           required>
+
+    <input type="text"
+           name="roll"
+           placeholder="Roll Number"
+           required>
+
+    <input type="file"
+           name="face_image"
+           required>
+
+    <button type="submit">
+      Add Student
+    </button>
+
+  </form>
+</div>
+
+<div class="section">
+
+  <h3>Students List</h3>
+
+  <div class="table-wrapper">
+
+    <table>
+
+      <tr>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Roll</th>
+        <th>Face</th>
+        <th>Action</th>
+      </tr>
+
+      {% for s in students %}
+      <tr>
+
+        <td>{{ s.name }}</td>
+        <td>{{ s.email }}</td>
+        <td>{{ s.roll }}</td>
+
+        <td>
+          <img src="{{ s.face_image.url }}" width="45">
+        </td>
+
+        <td>
+          <a href="/delete-student/{{ s.id }}/"
+             class="delete-btn"
+             onclick="showLoader(); return confirm('Delete this student?')">
+             Delete
+          </a>
+        </td>
+
+      </tr>
+      {% endfor %}
+
+    </table>
+
+  </div>
+</div>
+
+</div>
+
+<script>
+
+window.addEventListener("load",()=>{
+
+  setTimeout(()=>{
+
+    pageLoader.style.display="none";
+    mainContent.style.display="block";
+
+  },1500);
+
+});
+
+const pageLoader=document.getElementById("page-loader");
+const mainContent=document.getElementById("main-content");
+
+function showLoader(){
+  pageLoader.style.display="flex";
+}
+
+</script>
+
+</body>
+</html>
+

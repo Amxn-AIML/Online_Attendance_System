@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Attendance Location Control</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:"Segoe UI", sans-serif;
+}
+
+body{
+  background:#f1f5f9;
+  min-height:100vh;
+  display:flex;
+}
+
+#page-loader{
+  position:fixed;
+  width:100%;
+  height:100vh;
+  background:#0f172a;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  z-index:99999;
+  top:0;
+  left:0;
+}
+
+.loader-animation{
+  width:65px;
+  aspect-ratio:1;
+  position:relative;
+}
+
+.loader-animation:before,
+.loader-animation:after{
+  content:"";
+  position:absolute;
+  border-radius:50px;
+  box-shadow:0 0 0 3px inset #fff;
+  animation:l4 2.5s infinite;
+}
+
+.loader-animation:after{
+  animation-delay:-1.25s;
+}
+
+@keyframes l4{
+  0%{
+    inset:0 35px 35px 0;
+  }
+  12.5%{
+    inset:0 35px 0 0;
+  }
+  25%{
+    inset:35px 35px 0 0;
+  }
+  37.5%{
+    inset:35px 0 0 0;
+  }
+  50%{
+    inset:35px 0 0 35px;
+  }
+  62.5%{
+    inset:0 0 0 35px;
+  }
+  75%{
+    inset:0 0 35px 35px;
+  }
+  87.5%{
+    inset:0 0 35px 0;
+  }
+  100%{
+    inset:0 35px 35px 0;
+  }
+}
+
+#main-content{
+  display:none;
+  width:100%;
+}
+
+.main{
+  flex:1;
+  padding:30px;
+  width:100%;
+}
+
+.header{
+  background:white;
+  padding:18px 25px;
+  border-radius:14px;
+  box-shadow:0 8px 25px rgba(0,0,0,0.06);
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:10px;
+}
+
+.card{
+  margin-top:30px;
+  background:white;
+  padding:25px;
+  border-radius:16px;
+  box-shadow:0 10px 30px rgba(0,0,0,0.08);
+}
+
+.card h3{
+  color:#1f2937;
+  margin-bottom:6px;
+}
+
+.card p{
+  color:#6b7280;
+  font-size:14px;
+  margin-bottom:25px;
+}
+
+.form-group{
+  display:flex;
+  flex-direction:column;
+  margin-bottom:18px;
+}
+
+.form-group label{
+  font-size:14px;
+  font-weight:600;
+  margin-bottom:6px;
+  color:#374151;
+}
+
+.form-group input{
+  padding:12px 14px;
+  border-radius:10px;
+  border:1px solid #d1d5db;
+  font-size:16px;
+  transition:0.2s;
+  width:100%;
+}
+
+.form-group input:focus{
+  outline:none;
+  border-color:#4f46e5;
+  box-shadow:0 0 0 2px rgba(79,70,229,0.2);
+}
+
+.form-row{
+  display:flex;
+  gap:15px;
+  flex-wrap:wrap;
+}
+
+.save-btn{
+  margin-top:10px;
+  padding:14px;
+  width:100%;
+  background:linear-gradient(135deg,#4f46e5,#6366f1);
+  color:white;
+  border:none;
+  border-radius:12px;
+  font-size:15px;
+  font-weight:600;
+  cursor:pointer;
+  transition:0.3s;
+}
+
+.save-btn:hover{
+  transform:translateY(-2px);
+  box-shadow:0 14px 30px rgba(79,70,229,0.35);
+}
+
+.location-btn{
+  background:linear-gradient(135deg,#059669,#10b981);
+}
+
+.clear-btn{
+  background:linear-gradient(135deg,#ef4444,#dc2626);
+}
+
+.back{
+  text-decoration:none;
+  color:#4f46e5;
+  font-weight:600;
+}
+
+.back:hover{
+  color:red;
+}
+
+.active-box{
+  margin-top:30px;
+  background:#eef2ff;
+  border-left:6px solid #4f46e5;
+  padding:18px;
+  border-radius:12px;
+  word-wrap:break-word;
+}
+
+.active-box h4{
+  color:#1e40af;
+  margin-bottom:8px;
+}
+
+.active-box span{
+  display:block;
+  font-size:14px;
+  color:#374151;
+  margin-bottom:4px;
+}
+
+.note{
+  margin-top:12px;
+  color:#059669;
+  font-size:14px;
+  font-weight:600;
+}
+
+@media(max-width:768px){
+  .main{
+    padding:20px;
+  }
+
+  .form-row{
+    flex-direction:column;
+  }
+}
+
+@media(max-width:480px){
+  .card{
+    padding:20px;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div id="page-loader">
+  <div class="loader-animation"></div>
+</div>
+
+<div id="main-content">
+
+<div class="main">
+
+  <div class="header">
+    <h3>Attendance Location Control</h3>
+
+    <a href="/admin-dashboard/" class="back" onclick="showLoader()">
+      ← Back to Dashboard
+    </a>
+  </div>
+
+  <div class="card">
+
+    <h3>Set Allowed Attendance Location</h3>
+
+    <p>
+      Students will be able to mark attendance only inside this location radius.
+    </p>
+
+    <form method="POST" action="/add-location/" onsubmit="showLoader()">
+
+      {% csrf_token %}
+
+      <div class="form-group">
+        <label>Location Name</label>
+
+        <input type="text"
+               name="name"
+               id="name"
+               placeholder="College Campus"
+               required>
+      </div>
+
+      <div class="form-row">
+
+        <div class="form-group">
+          <label>Latitude</label>
+
+          <input type="text"
+                 name="latitude"
+                 id="latitude"
+                 placeholder="28.6139"
+                 required>
+        </div>
+
+        <div class="form-group">
+          <label>Longitude</label>
+
+          <input type="text"
+                 name="longitude"
+                 id="longitude"
+                 placeholder="77.2090"
+                 required>
+        </div>
+
+      </div>
+
+      <div class="form-group">
+        <label>Allowed Radius (meters)</label>
+
+        <input type="number"
+               name="radius"
+               placeholder="100"
+               required>
+      </div>
+
+      <button type="button"
+              class="save-btn location-btn"
+              onclick="getLocation()">
+        Use My Current Location
+      </button>
+
+      <button type="submit" class="save-btn">
+        Save & Activate Location
+      </button>
+
+      <div class="note" id="statusText"></div>
+
+    </form>
+  </div>
+
+  <div class="active-box">
+
+    <h4>Current Active Location</h4>
+
+    <span><strong>Name:</strong> {{ active_location.name }}</span>
+    <span><strong>Latitude:</strong> {{ active_location.latitude }}</span>
+    <span><strong>Longitude:</strong> {{ active_location.longitude }}</span>
+    <span><strong>Radius:</strong> {{ active_location.radius }} meters</span>
+
+  </div>
+
+  <form method="POST"
+        action="/clear-location/"
+        style="margin-top:15px;"
+        onsubmit="showLoader()">
+
+    {% csrf_token %}
+
+    <button type="submit" class="save-btn clear-btn">
+      Clear Active Location
+    </button>
+
+  </form>
+
+</div>
+
+</div>
+
+<script>
+
+window.addEventListener("load",function(){
+
+  setTimeout(function(){
+
+    document.getElementById("page-loader").style.display="none";
+    document.getElementById("main-content").style.display="block";
+
+  },1000);
+
+});
+
+function showLoader(){
+  document.getElementById("page-loader").style.display="flex";
+}
+
+function getLocation(){
+
+  const statusText = document.getElementById("statusText");
+
+  if(!navigator.geolocation){
+    statusText.innerText = "Location not supported in this browser";
+    return;
+  }
+
+  statusText.innerText = "Getting current location...";
+
+  navigator.geolocation.getCurrentPosition(
+
+    function(position){
+
+      document.getElementById("latitude").value =
+        position.coords.latitude.toFixed(6);
+
+      document.getElementById("longitude").value =
+        position.coords.longitude.toFixed(6);
+
+      document.getElementById("name").value =
+        "Current Admin Location";
+
+      statusText.innerText = "Location detected successfully";
+    },
+
+    function(){
+      statusText.innerText = "Location permission denied";
+    }
+
+  );
+}
+
+</script>
+
+</body>
+</html>
+

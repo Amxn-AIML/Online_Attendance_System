@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Camera Attendance</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:Segoe UI, sans-serif;
+}
+
+body{
+  background:linear-gradient(135deg,#4f46e5,#9333ea);
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:15px;
+}
+
+#page-loader{
+  position:fixed;
+  width:100%;
+  height:100vh;
+  background:#0f172a;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  z-index:99999;
+  top:0;
+  left:0;
+}
+
+.loader-animation {
+  width: 65px;
+  aspect-ratio: 1;
+  position: relative;
+}
+
+.loader-animation:before,
+.loader-animation:after {
+  content: "";
+  position: absolute;
+  border-radius: 50px;
+  box-shadow: 0 0 0 3px inset #fff;
+  animation: l4 2.5s infinite;
+}
+
+.loader-animation:after {
+  animation-delay: -1.25s;
+}
+
+@keyframes l4 {
+  0% {
+    inset: 0 35px 35px 0;
+  }
+  12.5% {
+    inset: 0 35px 0 0;
+  }
+  25% {
+    inset: 35px 35px 0 0;
+  }
+  37.5% {
+    inset: 35px 0 0 0;
+  }
+  50% {
+    inset: 35px 0 0 35px;
+  }
+  62.5% {
+    inset: 0 0 0 35px;
+  }
+  75% {
+    inset: 0 0 35px 35px;
+  }
+  87.5% {
+    inset: 0 0 35px 0;
+  }
+  100% {
+    inset: 0 35px 35px 0;
+  }
+}
+
+#main-content{
+  display:none;
+  width:100%;
+  min-height:100vh;
+  justify-content:center;
+  align-items:center;
+}
+
+.card{
+  background:#fff;
+  padding:30px;
+  border-radius:18px;
+  width:100%;
+  max-width:380px;
+  margin:auto;
+  box-shadow:0 25px 50px rgba(0,0,0,.25);
+  text-align:center;
+}
+
+.card h2{
+  margin-bottom:10px;
+}
+
+.status-box{
+  margin-bottom:15px;
+  font-weight:600;
+  color:#16a34a;
+  font-size:14px;
+}
+
+input[type="text"]{
+  width:100%;
+  padding:12px;
+  border-radius:10px;
+  border:1px solid #d1d5db;
+  font-size:16px;
+  margin-bottom:10px;
+}
+
+.preview{
+  width:100%;
+  height:260px;
+  border-radius:14px;
+  margin-top:15px;
+  background:#f3f4f6;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+}
+
+video,img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+}
+
+button{
+  margin-top:15px;
+  width:100%;
+  padding:13px;
+  border:none;
+  border-radius:12px;
+  background:#4f46e5;
+  color:white;
+  font-size:16px;
+  cursor:pointer;
+}
+
+button:disabled{
+  background:gray;
+  cursor:not-allowed;
+}
+
+.secondary-btn{
+  background:#374151;
+}
+
+.error{
+  color:red;
+  margin-top:10px;
+  font-size:14px;
+}
+
+@media(max-width:480px){
+  .card{
+    padding:20px;
+  }
+
+  .preview{
+    height:220px;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div id="page-loader">
+  <div class="loader-animation"></div>
+</div>
+
+<div id="main-content">
+
+<div class="card">
+  <h2>Live Attendance</h2>
+
+  {% if location_start %}
+  <div class="status-box">
+    Attendance Location Active
+  </div>
+  {% endif %}
+
+  <form method="POST" onsubmit="return submitForm()">
+    {% csrf_token %}
+
+    <input type="text" name="roll" placeholder="Enter Roll Number" required>
+
+    <div class="preview">
+      <video id="video" autoplay playsinline></video>
+      <img id="capturedImg" style="display:none;">
+    </div>
+
+    <canvas id="canvas" style="display:none;"></canvas>
+
+    <input type="hidden" name="image_data" id="image_data">
+    <input type="hidden" name="latitude" id="lat">
+    <input type="hidden" name="longitude" id="lon">
+
+    <button type="button" onclick="capture()">Capture Face</button>
+
+    <button type="submit" id="submitBtn">Mark Attendance</button>
+
+    <button type="button" class="secondary-btn" onclick="window.history.back()">Back</button>
+
+    {% if error %}
+      <div class="error">{{ error }}</div>
+    {% endif %}
+  </form>
+</div>
+
+</div>
+
+<script>
+
+window.addEventListener("load",function(){
+
+  setTimeout(function(){
+
+    document.getElementById("page-loader").style.display="none";
+    document.getElementById("main-content").style.display="flex";
+
+  },3000);
+
+});
+
+let stream;
+
+const video = document.getElementById("video");
+const image_data = document.getElementById("image_data");
+const lat = document.getElementById("lat");
+const lon = document.getElementById("lon");
+
+navigator.mediaDevices.getUserMedia({
+  video:{ facingMode:"user" }
+})
+.then(s=>{
+  stream = s;
+  video.srcObject = s;
+})
+.catch(()=>{
+  alert("Camera access denied");
+});
+
+function capture(){
+
+  const canvas = document.getElementById("canvas");
+  const img = document.getElementById("capturedImg");
+
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+
+  canvas.getContext("2d").drawImage(video,0,0);
+
+  const imageData = canvas.toDataURL("image/jpeg");
+
+  image_data.value = imageData;
+
+  img.src = imageData;
+  img.style.display = "block";
+  video.style.display = "none";
+
+  if(stream){
+    stream.getTracks().forEach(track=>track.stop());
+  }
+}
+
+navigator.geolocation.getCurrentPosition(
+  pos=>{
+    lat.value = pos.coords.latitude;
+    lon.value = pos.coords.longitude;
+  },
+  ()=>{
+    alert("Location access denied");
+  }
+);
+
+function submitForm(){
+
+  if(!image_data.value){
+    alert("Please capture face first!");
+    return false;
+  }
+
+  if(!lat.value || !lon.value){
+    alert("Please allow location access!");
+    return false;
+  }
+
+  document.getElementById("page-loader").style.display = "flex";
+
+  return true;
+}
+</script>
+
+</body>
+</html>
+
+
